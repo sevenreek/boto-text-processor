@@ -40,7 +40,10 @@ def smart_setup():
     return App(AWS, bucket, queue)
 
 def delete_all(app:App):
+    print("Deleting objects in bucket")
     for key in app.bucket.objects.all():
         key.delete()
+    print("Deleting bucket")
     app.bucket.delete()
+    print("Deleting queue")
     app.queue.delete()

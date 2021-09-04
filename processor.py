@@ -41,18 +41,22 @@ def main():
     if not path.isdir(files_dir):
         os.mkdir(files_dir)
     aws = smart_setup()
+    print(f"Processor started with {os.cpu_count()} workers.")
     with Pool(processes=os.cpu_count(), initializer=process_init) as pool:
         while True:
-            messages = list(aws.queue.receive_messages(
-                WaitTimeSeconds=20,
-                MaxNumberOfMessages=min(10,os.cpu_count()) # api can handle 10 at most
-            ))
-            file_list = list(map(lambda m: m.body, messages))
-            if(len(messages)):
-                results = pool.map(process_message, file_list)
-                for i, r in enumerate(results):
-                    if r:
-                        messages[i].delete()
+            try:
+                messages = list(aws.queue.receive_messages(
+                    WaitTimeSeconds=20,
+                    MaxNumberOfMessages=min(10,os.cpu_count()) # api can handle 10 at most
+                ))
+                file_list = list(map(lambda m: m.body, messages))
+                if(len(messages)):
+                    results = pool.map(process_message, file_list)
+                    for i, r in enumerate(results):
+                        if r:
+                            messages[i].delete()
+            except KeyboardInterrupt:
+                break
 
 
 if __name__ == "__main__":
